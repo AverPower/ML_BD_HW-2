@@ -1,0 +1,42 @@
+Создание таблицы и загрузка данных:
+
+CREATE TABLE my_artists (mbid STRING, artist_mb STRING, artist_lastfm STRING, country_mb STRING, country_lastfm STRING, tags_mb STRING, tags_lastfm STRING, listeners_lastfm BIGINT, scrobbles_lastfm BIGINT, ambiguous_artist BOOLEAN) ROW FORMAT DELIMITED FIELDS TERMINATED BY ',';
+
+ALTER TABLE my_artists SET TBLPROPERTIES ("skip.header.line.count"="1");
+
+LOAD DATA LOCAL INPATH '/opt/hive/examples/files/artists.csv' OVERWRITE INTO TABLE my_artists;
+
+
+
+
+
+Запрос 1:
+
+select artist_mb 
+from my_artists 
+where scrobbles_lastfm in 
+	(select MAX(scrobbles_lastfm) from my_artists);
+
+
+Ответ 1:
+
+artist
+The Beatles
+
+
+
+Запрос 2:
+
+select trim(tag) as tag, count(*) as number
+from (
+	SELECT explode(SPLIT(tags_lastfm, ';')) as tag from my_artists x
+	) tags 
+group by tags.tag
+having tag != ""
+order by number desc
+limit 1
+
+Ответ 2:
+
+tag,number
+seen live,81278
