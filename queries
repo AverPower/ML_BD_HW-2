@@ -62,29 +62,42 @@ top_tags
 
 #Воспользуемся найденными тэгами
 
-select artist_lastfm from my_artists b
-    where b.scrobbles_lastfm in (
-        select max(scrobbles_lastfm) from (
-            select a.scrobbles_lastfm,  array_contains(array(
-                array_contains(SPLIT(a.tags_lastfm, ';'), "seen live"), 
-                array_contains(SPLIT(a.tags_lastfm, ';'), "rock"), 
-                array_contains(SPLIT(a.tags_lastfm, ';'), "electronic"), 
-                array_contains(SPLIT(a.tags_lastfm, ';'), "All"), 
-                array_contains(SPLIT(a.tags_lastfm, ';'), "under 2000 listeners"),
-                array_contains(SPLIT(a.tags_lastfm, ';'), "alternative"),
-                array_contains(SPLIT(a.tags_lastfm, ';'), "indie"),
-                array_contains(SPLIT(a.tags_lastfm, ';'), "experimental"), 
-                array_contains(SPLIT(a.tags_lastfm, ';'), "female vocalists") 
-                ), True) as tags
-                from my_artists a
-            ) tbl
-            where tbl.tags=True
-        ) 
+select art.artist_lastfm as artists
+from (
+    select tbl.artist_lastfm, tbl.scrobbles_lastfm
+    from (
+        select a.artist_lastfm, a.scrobbles_lastfm,  array_contains(array(
+            array_contains(SPLIT(a.tags_lastfm, ';'), "seen live"), 
+            array_contains(SPLIT(a.tags_lastfm, ';'), "rock"), 
+            array_contains(SPLIT(a.tags_lastfm, ';'), "electronic"), 
+            array_contains(SPLIT(a.tags_lastfm, ';'), "All"), 
+            array_contains(SPLIT(a.tags_lastfm, ';'), "under 2000 listeners"),
+            array_contains(SPLIT(a.tags_lastfm, ';'), "alternative"),
+            array_contains(SPLIT(a.tags_lastfm, ';'), "indie"),
+            array_contains(SPLIT(a.tags_lastfm, ';'), "experimental"), 
+            array_contains(SPLIT(a.tags_lastfm, ';'), "female vocalists") 
+            ), True ) as tags
+        from my_artists a
+        ) tbl
+    where tbl.tags=True
+    order by tbl.scrobbles_lastfm desc
+    limit 10
+) art
         
 Ответ:
 
-artist_lastfm
+artists
 Radiohead
+Coldplay
+Linkin Park
+Red Hot Chili Peppers
+Lana Del Rey
+Daft Punk
+The Killers
+Foo Fighters
+David Bowie
+Paramore
+
 
 
 
