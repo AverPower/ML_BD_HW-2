@@ -10,7 +10,7 @@ LOAD DATA LOCAL INPATH '/opt/hive/examples/files/artists.csv' OVERWRITE INTO TAB
 
 
 
-Запрос 1:
+1.
 
 select artist_mb 
 from my_artists 
@@ -18,14 +18,14 @@ where scrobbles_lastfm in
 	(select MAX(scrobbles_lastfm) from my_artists);
 
 
-Ответ 1:
+Ответ:
 
 artist
 The Beatles
 
 
 
-Запрос 2:
+2.
 
 select trim(tag) as tag, count(*) as number
 from (
@@ -36,7 +36,55 @@ having tag != ""
 order by number desc
 limit 1
 
-Ответ 2:
+Ответ:
 
 tag,number
 seen live,81278
+
+
+
+3.
+
+#Сформирумем топ 10 тэгов
+Select collect_list(tag) as top_tags from 
+    (Select trim(tag) as tag, count(*) as number
+    From (
+        SELECT explode(SPLIT(tags_lastfm, ';')) as tag from my_artists x
+        ) tags 
+    group by tags.tag
+    having tag != ""
+    order by number desc
+    limit 10
+    ) tags_count;
+
+top_tags
+["seen live","rock","electronic","All","under 2000 listeners","alternative","pop","indie","experimental","female vocalists"]
+
+#Воспользуемся найденными тэгами
+
+select artist_lastfm from my_artists b
+    where b.scrobbles_lastfm in (
+        select max(scrobbles_lastfm) from (
+            select a.scrobbles_lastfm,  array_contains(array(
+                array_contains(SPLIT(a.tags_lastfm, ';'), "seen live"), 
+                array_contains(SPLIT(a.tags_lastfm, ';'), "rock"), 
+                array_contains(SPLIT(a.tags_lastfm, ';'), "electronic"), 
+                array_contains(SPLIT(a.tags_lastfm, ';'), "All"), 
+                array_contains(SPLIT(a.tags_lastfm, ';'), "under 2000 listeners"),
+                array_contains(SPLIT(a.tags_lastfm, ';'), "alternative"),
+                array_contains(SPLIT(a.tags_lastfm, ';'), "indie"),
+                array_contains(SPLIT(a.tags_lastfm, ';'), "experimental"), 
+                array_contains(SPLIT(a.tags_lastfm, ';'), "female vocalists") 
+                ), True) as tags
+                from my_artists a
+            ) tbl
+            where tbl.tags=True
+        ) 
+        
+Ответ:
+
+artist_lastfm
+Radiohead
+
+
+
